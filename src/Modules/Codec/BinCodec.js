@@ -32,39 +32,43 @@ class Encoder {
 		};
 
 		const buffer = new ArrayBuffer(128);
+		const view = new DataView(buffer);
 		let offset = 0;
 
-		buffer.setUint8(0, Opcodes.Input);
-		buffer.setUint8(1, Object.keys(inputObj).length);
+		view.setUint8(0, Opcodes.Input);
+		view.setUint8(1, Object.keys(inputObj).length);
 		offset += 2
 
 		Object.keys(inputObj).forEach(key => {
 			const dataType = params[key];
-			buffer.setUint8(offset, Object.keys(params).indexOf(key));
+			view.setUint8(offset, Object.keys(params).indexOf(key));
 			offset++;
 
 			switch (dataType) {
 				case 'Uint16':
-					buffer.setUint16(offset, inputObj[key]);
+					view.setUint16(offset, inputObj[key]);
 					offset += 2;
 					break;
 
 				case 'Int16':
-					buffer.setInt16(offset, inputObj[key]);
+					view.setInt16(offset, inputObj[key]);
 					offset += 2;
 					break;
 
 				case 'Boolean':
-					buffer.setUint8(offset, Number(inputObj[key]));
+					view.setUint8(offset, Number(inputObj[key]));
 					offset++;
 					break;
 			}
 		});
+
+		return buffer.slice(0, offset);
 	}
 
 	encodeHeartbeat() { // i like using the word heartbeat instead of ping because it sounds cooler
 		const buffer = new ArrayBuffer(1);
-		buffer.setUint8(0, Opcodes.Heartbeat);
+		const view = new DataView(buffer);
+		view.setUint8(0, Opcodes.Heartbeat);
 
 		return buffer;
 	}

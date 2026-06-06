@@ -6,13 +6,13 @@ class Encoder {
 			Opcodes.JoinGame,
 
 			username.length,
-			new TextEncoder().encode(username),
+			...new TextEncoder().encode(username),
 
 			partyKey.length,
-			new TextEncoder().encode(partyKey),
+			...new TextEncoder().encode(partyKey),
 
 			reconnectSecret.length,
-			new TextEncoder().encode(reconnectSecret)
+			...new TextEncoder().encode(reconnectSecret)
 		]);
 
 		return packet.buffer;

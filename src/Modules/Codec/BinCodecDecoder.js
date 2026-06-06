@@ -1,3 +1,32 @@
+import ServerToClientRpcMap from './ServerToClientRpcMap.js';
+
+const rpcIdToName = [
+	"PartyKey",
+	"PartyBuilding",
+	"PartyRequest",
+	"PartyRequestCancelled",
+	"PartyRequestMet",
+	"PartyMembersUpdated",
+	"UpdateParty",
+	"UpdateLeaderboard",
+	"Respawned",
+	"SetTool",
+	"Dead",
+	"ToolInfo",
+	"BuildingInfo",
+	"SpellInfo",
+	"CastSpellResponse",
+	"ClearActiveSpell",
+	"EntityData",
+	"Failure",
+	"ReceiveChatMessage",
+	"DamageDealt",
+	"LightningZap",
+	"SetTickRate",
+	"EntityKilled",
+	"AdminCommandResponse",
+]
+
 export default class BinCodecDecoder {
 	#readVString(packet, offset) {
 		const strLen = new DataView(packet).getUint8(offset);
@@ -67,6 +96,17 @@ export default class BinCodecDecoder {
 	}
 
 	decodeRpc(packet) {
+		const view = new DataView(packet);
+		const rpcId = view.getUint8(1);
+
+		const rpcName = rpcIdToName[rpcId];
+		const rpcParams = ServerToClientRpcMap[rpcName];
+		const rpc = {
+			name: rpcName,
+			response: {}
+		};
+
+
 	}
 
 	decodeEntityUpdate(packet) {

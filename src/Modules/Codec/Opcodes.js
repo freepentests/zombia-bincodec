@@ -11,4 +11,3 @@ const Opcodes = {
 
 export default Opcodes;
 
-

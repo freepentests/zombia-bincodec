@@ -37,12 +37,12 @@ class Encoder {
 
 			switch(dataType) {
 				case 'Uint32':
-					view.setUint32(offset, argValue);
+					view.setUint32(offset, argValue, true);
 					offset += 4;
 					break;
 
 				case 'Uint16':
-					view.setUint16(offset, argValue);
+					view.setUint16(offset, argValue, true);
 					offset += 2;
 					break;
 
@@ -63,7 +63,7 @@ class Encoder {
 
 				case 'ArrayUint32':
 					argValue.forEach(num => {
-						view.setUint32(offset, num);
+						view.setUint32(offset, num, true);
 						offset += 4;
 					});
 					break;
@@ -89,12 +89,12 @@ class Encoder {
 
 			switch (dataType) {
 				case 'Uint16':
-					view.setUint16(offset, inputObj[key]);
+					view.setUint16(offset, inputObj[key], true);
 					offset += 2;
 					break;
 
 				case 'Int16':
-					view.setInt16(offset, inputObj[key]);
+					view.setInt16(offset, inputObj[key], true);
 					offset += 2;
 					break;
 

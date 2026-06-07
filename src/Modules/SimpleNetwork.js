@@ -5,11 +5,7 @@ import WebSocket from 'ws';
 import { EventEmitter } from 'events';
 
 export default class SimpleNetwork extends EventEmitter {
-	static instance = null;
-
 	constructor() {
-		if (SimpleNetwork.instance) return SimpleNetwork.instance;
-
 		super();
 
 		this.ws;
@@ -344,8 +340,6 @@ export default class SimpleNetwork extends EventEmitter {
 			invulnerable: 'Boolean',
 			projectileKind: 'ProjectileKind'
 		}
-
-		SimpleNetwork.instance = this;
 	}
 
 	init(...args) {

@@ -1,25 +1,36 @@
 import SimpleNetwork from './Modules/SimpleNetwork.js';
 
 const scanSingleServer = (serverId) => {
-	const network = new SimpleNetwork();
-	network.init(`wss://server-${serverId}.zombia.io/`);
+	return new Promise((resolve, reject) => {
+		const network = new SimpleNetwork();
+		network.init(`wss://server-${serverId}.zombia.io/`);
 
-	network.ws.onopen = () => {
-		network.sendEnterWorld({
-			username: 'Adam Lanza'
-		});
+		network.ws.onopen = () => {
+			network.sendEnterWorld({
+				username: 'Adam Lanza'
+			});
 
-		network.on('rpc', (e) => {
-			if (e.name === 'UpdateLeaderboard') {
-				console.log(e.response.map(entry => {
-					if (entry.uid !== network.myUid) return `${entry.name}: Wave ${entry.wave} `;
-				}).filter(entry => entry).join('\n'));
+			network.on('rpc', (e) => {
+				if (e.name === 'UpdateLeaderboard') {
+					const result = e.response.map(entry => {
+						if (entry.uid !== network.myUid) return `${entry.name}: Wave ${entry.wave} `;
+					}).filter(entry => entry).join('\n');
 
-				network.ws.close();
-			}
-		});
-	};
+					if (result) console.log(result);
+
+					network.ws.close();
+
+					resolve();
+				}
+			});
+		};
+	});
 };
 
-scanSingleServer('v05001');
+(async () => {
+	const servers = ['v03002', 'v04001', 'v05002', 'v05001', 'v04002', 'v03001'];
+	console.log('Server scan results:\n');
+
+	await Promise.all(servers.map(server => scanSingleServer(server)));
+})();
 

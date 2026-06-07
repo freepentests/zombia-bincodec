@@ -2,33 +2,26 @@ import Opcodes from './Opcodes.js';
 import RpcMap from './RpcMap.js';
 import InputParamsMap from './InputParamsMap.js';
 
+import ByteBuffer from 'bytebuffer';
+
 export default class Encoder {
 	encodeEnterWorld(username, partyKey = '', reconnectSecret = '') {
-		const packet = new Uint8Array([
-			Opcodes.JoinGame,
+		const packet = new ByteBuffer(0, true);
 
-			username.length,
-			...new TextEncoder().encode(username),
-
-			partyKey.length,
-			...new TextEncoder().encode(partyKey),
-
-			reconnectSecret.length,
-			...new TextEncoder().encode(reconnectSecret)
-		]);
+		packet.writeUint8(Number(Opcodes.JoinGame));
+		packet.writeVString(username);
+		packet.writeVString(partyKey);
+		packet.writeVString(reconnectSecret);
 
 		return packet.buffer;
 	}
 
 	encodeRpc(rpcObj) {
-		const buffer = new ArrayBuffer(1024); // 1024 is probably excessive but whatever
-		const view = new DataView(buffer);
-		let offset = 0;
+		const buffer = new ByteBuffer(0, true);
 
 		const rpcId = Object.keys(RpcMap).indexOf(rpcObj.response.name);
-		view.setUint8(0, Opcodes.Rpc);
-		view.setUint8(1, rpcId);
-		offset += 2;
+		buffer.writeUint8(Number(Opcodes.Rpc));
+		buffer.writeUint8(rpcId);
 
 		const rpcParams = RpcMap[rpcObj.response.name];
 		Object.keys(rpcParams).forEach(param => {
@@ -37,83 +30,65 @@ export default class Encoder {
 
 			switch(dataType) {
 				case 'Uint32':
-					view.setUint32(offset, argValue, true);
-					offset += 4;
+					buffer.writeUint32(argValue);
 					break;
 
 				case 'Uint16':
-					view.setUint16(offset, argValue, true);
-					offset += 2;
+					buffer.writeUint16(argValue);
 					break;
 
 				case 'Boolean':
-					view.setUint8(offset, Number(argValue));
-					offset++;
+					buffer.writeUint8(Number(argValue));
 					break;
 
 				case 'String':
-					const bytes = new TextEncoder().encode(argValue);
-					view.setUint8(offset, argValue.length);
-					offset++;
-					bytes.forEach(byte => {
-						view.setUint8(offset, byte);
-						offset++;
-					});
+					buffer.writeVString(argValue);
 					break;
 
 				case 'ArrayUint32':
 					argValue.forEach(num => {
-						view.setUint32(offset, num, true);
-						offset += 4;
+						buffer.writeUint32(num);
 					});
 					break;
 			}
 		});
 
-		return buffer.slice(0, offset);
+		return buffer.buffer;
 	}
 
 	encodeInput(inputObj) {
-		const buffer = new ArrayBuffer(128);
-		const view = new DataView(buffer);
-		let offset = 0;
+		const buffer = new ByteBuffer(0, true);
 
-		view.setUint8(0, Opcodes.Input);
-		view.setUint8(1, Object.keys(inputObj).length);
-		offset += 2
+		buffer.writeUint8(Number(Opcodes.Input));
+		buffer.writeUint8(Object.keys(inputObj).length);
 
 		Object.keys(inputObj).forEach(key => {
 			const dataType = InputParamsMap[key];
-			view.setUint8(offset, Object.keys(InputParamsMap).indexOf(key));
-			offset++;
+			buffer.writeUint8(Object.keys(InputParamsMap).indexOf(key));
 
 			switch (dataType) {
 				case 'Uint16':
-					view.setUint16(offset, inputObj[key], true);
-					offset += 2;
+					buffer.writeUint16(inputObj[key]);
 					break;
 
 				case 'Int16':
-					view.setInt16(offset, inputObj[key], true);
-					offset += 2;
+					buffer.writeInt16(inputObj[key]);
 					break;
 
 				case 'Boolean':
-					view.setUint8(offset, Number(inputObj[key]));
-					offset++;
+					buffer.writeUint8(Number(inputObj[key]));
 					break;
 			}
 		});
 
-		return buffer.slice(0, offset);
+		return buffer.buffer;
 	}
 
 	encodeHeartbeat() { // i like using the word heartbeat instead of ping because it sounds cooler
-		const buffer = new ArrayBuffer(1);
-		const view = new DataView(buffer);
-		view.setUint8(0, Opcodes.Heartbeat);
+		const buffer = new ByteBuffer(0, true);
+		buffer.writeUint8(Opcodes.Heartbeat);
 
-		return buffer;
+		return buffer.buffer;
 	}
 }
 

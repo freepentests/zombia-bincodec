@@ -16,7 +16,7 @@ const fillServer = (servId) => {
 		});
 
 		ws.onopen = (e) => {
-			ws.send(new BinCodec().encoder.encodeEnterWorld('nighater', 'eglmxD2ghQl'));
+			ws.send(new BinCodec().encoder.encodeEnterWorld('nighater', '67tpWpcw7ik'));
 
 			ws.send(new BinCodec().encoder.encodeInput({
 				up: true,
@@ -39,6 +39,7 @@ const fillServer = (servId) => {
 			const msg = e.data;
 			const opcode = new Uint8Array(msg)[0];
 
+			/*
 			if (opcode === 4) {
 				console.log(new BinCodec().decoder.decodeEnterWorld(msg.buffer));
 			}
@@ -46,6 +47,7 @@ const fillServer = (servId) => {
 			if (opcode === 9) {
 				console.log(new BinCodec().decoder.decodeRpc(msg.buffer));
 			}
+			*/
 		};
 
 		ws.onclose = (e) => {

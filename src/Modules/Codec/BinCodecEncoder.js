@@ -1,5 +1,9 @@
-class Encoder {
-	encodeJoinGame(username, partyKey = '', reconnectSecret = '') {
+import Opcodes from './Opcodes.js';
+import RpcMap from './RpcMap.js';
+import InputParamsMap from './InputParamsMap.js';
+
+export default class Encoder {
+	encodeEnterWorld(username, partyKey = '', reconnectSecret = '') {
 		const packet = new Uint8Array([
 			Opcodes.JoinGame,
 

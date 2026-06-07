@@ -46,12 +46,11 @@ export default class BinCodecDecoder {
 
 		// i really need to start using bytebuffer
 
-		let offset = 2; 
+		let offset = 4;
 		let name, reconnectSecret;
 
 		[reconnectSecret, offset] = this.#readVString(packet, offset);
 		[name, offset] = this.#readVString(packet, offset);
-		console.log(offset);
 
 		const uid = view.getUint32(offset, true);
 		offset += 4;
@@ -106,7 +105,60 @@ export default class BinCodecDecoder {
 			response: {}
 		};
 
+		let offset = 2;
 
+		if (rpcParams.isArray) {
+			return rpc; // will implement array logic later
+		} else {
+			Object.keys(rpcParams).forEach(paramName => {
+				const dataType = rpcParams[paramName];
+				let data;
+
+				switch (dataType) {
+					case 'Boolean':
+						data = Boolean(view.getUint8(offset));
+						offset++;
+						break;
+
+					case 'String':
+						[data, offset] = this.#readVString(offset);
+						break;
+
+					case 'Uint8':
+						data = view.getUint8(offset);
+						offset++;
+						break;
+
+					case 'Uint16':
+						data = view.getUint16(offset, true);
+						offset += 2;
+						break;
+
+					case 'Uint32':
+						data = view.getUint32(offset, true);
+						offset += 4;
+						break;
+
+					case 'Uint64':
+						data = view.getBigUint64(offset, true);
+						offset += 8;
+						break;
+
+					case 'OptionalUint32':
+						/*
+						here's a portion from zombia's official code as a reference for how this works:
+
+						r = t.readUint8() ? t.readUint32() : null;
+						*/
+						data = Boolean(view.getUint8(offset++)) ? (offset += 4, view.getUint32(offset - 4, true)) : null;
+						break;
+				}
+
+				rpc.response[paramName] = data;
+			});
+		}
+
+		return rpc;
 	}
 
 	decodeEntityUpdate(packet) {

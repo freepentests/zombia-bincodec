@@ -64,6 +64,47 @@ export default class BinCodecDecoder {
 		}
 	}
 
+	readRpcParams(response, rpcParams, view) {
+		Object.keys(rpcParams).forEach(paramName => {
+			if (paramName === 'isArray')  return;
+
+			const dataType = rpcParams[paramName];
+			let data;
+
+			switch (dataType) {
+				case 'Boolean':
+					data = Boolean(view.readUint8());
+					break;
+
+				case 'String':
+					data = view.readVString();
+					break;
+
+				case 'Uint8':
+					data = view.readUint8();
+					break;
+
+				case 'Uint16':
+					data = view.readUint16();
+					break;
+
+				case 'Uint32':
+					data = view.readUint32();
+					break;
+
+				case 'Uint64':
+					data = view.readUint64();
+					break;
+
+				case 'OptionalUint32':
+					data = view.readUint8() ? view.readUint32() : null;
+					break;
+			}
+
+			response[paramName] = data;
+		});
+	}
+
 	decodeRpc(packet) {
 		const view = ByteBuffer.fromBinary(packet, true);
 		view.offset = 1; // skip over opcode
@@ -85,86 +126,15 @@ export default class BinCodecDecoder {
 
 			for (let i = 0; i < numElements; i++) {
 				let response = {};
-				Object.keys(rpcParams).forEach(paramName => {
-					if (paramName === 'isArray')  return;
 
-					const dataType = rpcParams[paramName];
-					let data;
-
-					switch (dataType) {
-						case 'Boolean':
-							data = Boolean(view.readUint8());
-							break;
-
-						case 'String':
-							data = view.readVString();
-							break;
-
-						case 'Uint8':
-							data = view.readUint8();
-							break;
-
-						case 'Uint16':
-							data = view.readUint16();
-							break;
-
-						case 'Uint32':
-							data = view.readUint32();
-							break;
-
-						case 'Uint64':
-							data = view.readUint64();
-							break;
-
-						case 'OptionalUint32':
-							data = view.readUint8() ? view.readUint32() : null;
-							break;
-					}
-
-					response[paramName] = data;
-				});
+				this.readRpcParams(response, rpcParams, view);
 
 				elements.push(response);
 			}
 
 			return (rpc.response = elements, rpc);
 		} else {
-			Object.keys(rpcParams).forEach(paramName => {
-				const dataType = rpcParams[paramName];
-				let data;
-
-				switch (dataType) {
-					case 'Boolean':
-						data = Boolean(view.readUint8());
-						break;
-
-					case 'String':
-						data = view.readVString();
-						break;
-
-					case 'Uint8':
-						data = view.readUint8();
-						break;
-
-					case 'Uint16':
-						data = view.readUint16();
-						break;
-
-					case 'Uint32':
-						data = view.readUint32();
-						break;
-
-					case 'Uint64':
-						data = view.readUint64();
-						break;
-
-					case 'OptionalUint32':
-						data = view.readUint8() ? view.readUint32() : null;
-						break;
-				}
-
-				rpc.response[paramName] = data;
-			});
+			this.readRpcParams(rpc.response, rpcParams, view);
 		}
 
 		return rpc;

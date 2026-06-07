@@ -15,6 +15,8 @@ const fillServer = (servId) => {
 			agent: new SocksProxyAgent('socks5://' + proxies[index])
 		});
 
+		ws.binaryType = 'arraybuffer';
+
 		ws.onopen = (e) => {
 			ws.send(new BinCodec().encoder.encodeEnterWorld('nighater', '67tpWpcw7ik'));
 
@@ -39,15 +41,13 @@ const fillServer = (servId) => {
 			const msg = e.data;
 			const opcode = new Uint8Array(msg)[0];
 
-			/*
 			if (opcode === 4) {
-				console.log(new BinCodec().decoder.decodeEnterWorld(msg.buffer));
+				console.log(new BinCodec().decoder.decodeEnterWorld(msg));
 			}
 
 			if (opcode === 9) {
-				console.log(new BinCodec().decoder.decodeRpc(msg.buffer));
+				console.log(new BinCodec().decoder.decodeRpc(msg));
 			}
-			*/
 		};
 
 		ws.onclose = (e) => {

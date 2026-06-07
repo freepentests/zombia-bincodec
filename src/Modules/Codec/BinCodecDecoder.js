@@ -1,4 +1,5 @@
 import ServerToClientRpcMap from './ServerToClientRpcMap.js';
+import ByteBuffer from 'bytebuffer';
 
 const rpcIdToName = [
 	"PartyKey",
@@ -28,77 +29,24 @@ const rpcIdToName = [
 ]
 
 export default class BinCodecDecoder {
-	#readVarint32(packet, offset) {
-		// LEB128 standard
-		let number = 0;
-		let placesToShift = 0;
-		let position = offset;
-		const byteArray = new Uint8Array(packet);
-
-		while (position < byteArray.length) {
-			const byte = byteArray[position++];
-
-			number |= (byte & 127) << placesToShift;
-			placesToShift += 7;
-
-			if (byte & 128) break; // if MSB is 128 then no continuation
-		}
-
-		return [number, position];
-	}
-
-	#readVString(packet, offset) {
-		let strLen;
-		[strLen, offset] = this.#readVarint32(packet, offset);
-		const stringBuffer = packet.slice(offset, offset + strLen);
-		const string = new TextDecoder().decode(new Uint8Array(stringBuffer));
-
-		const newOffset = offset + strLen;
-
-		return [string, newOffset];
-	}
-
 	decodeEnterWorld(packet) {
-		const view = new DataView(packet);
+		const view = ByteBuffer.fromBinary(packet, true);
+		view.offset = 1; // skip over opcode
 
-		const allowed = Boolean(view.getUint8(1));
-		if (!allowed) return { allowed: false, reason: this.#readVString(packet, 2)[0] };
+		const allowed = Boolean(view.readUint8());
+		if (!allowed) return { allowed: false, reason: view.readVString() };
 
-		// i really need to start using bytebuffer
-
-		let offset = 1;
-		let name, reconnectSecret;
-
-		[reconnectSecret, offset] = this.#readVString(packet, offset);
-		[name, offset] = this.#readVString(packet, offset);
-
-		console.log(name);
-
-		const uid = view.getUint32(offset, true);
-		offset += 4;
-
-		const startingTick = view.getUint32(offset, true);
-		offset += 4;
-
-		const x = view.getUint16(offset, true);
-		offset += 2;
-
-		const y = view.getUint16(offset, true);
-		offset += 2;
-
-		const dayLengthMs = view.getUint32(offset, true);
-		offset += 4;
-
-		const nightLengthMs = view.getUint32(offset, true);
-		offset += 4;
-
-		const minimumBuildDistanceFromWall = view.getUint8(offset);
-		offset++;
-
-		const maxFactoryBuildDistance = view.getUint8(offset);
-		offset++;
-
-		const maxPlayerBuildDistance = view.getUint8(offset);
+		const reconnectSecret = view.readVString();
+		const name = view.readVString();
+		const uid = view.readUint32();
+		const startingTick = view.readUint32();
+		const x = view.readUint16();
+		const y = view.readUint16();
+		const dayLengthMs = view.readUint32();
+		const nightLengthMs = view.readUint32();
+		const minimumBuildDistanceFromWall = view.readUint8();
+		const maxFactoryBuildDistance = view.readUint8();
+		const maxPlayerBuildDistance = view.readUint8();
 
 		return {
 			allowed: true,
@@ -117,18 +65,19 @@ export default class BinCodecDecoder {
 	}
 
 	decodeRpc(packet) {
-		const view = new DataView(packet);
-		const rpcId = view.getUint8(1);
+		const view = ByteBuffer.fromBinary(packet, true);
+		view.offset = 1; // skip over opcode
+
+		const rpcId = view.readUint8();
 
 		const rpcName = rpcIdToName[rpcId];
-		if (!rpcName) return rpcId;
+		if (!rpcName) return {};
+
 		const rpcParams = ServerToClientRpcMap[rpcName];
 		const rpc = {
 			name: rpcName,
 			response: {}
 		};
-
-		let offset = 2;
 
 		if (rpcParams.isArray) {
 			return rpc; // will implement array logic later
@@ -139,41 +88,31 @@ export default class BinCodecDecoder {
 
 				switch (dataType) {
 					case 'Boolean':
-						data = Boolean(view.getUint8(offset));
-						offset++;
+						data = Boolean(view.readUint8());
 						break;
 
 					case 'String':
-						[data, offset] = this.#readVString(packet, offset); 
+						data = view.readVString();
 						break;
 
 					case 'Uint8':
-						data = view.getUint8(offset);
-						offset++;
+						data = view.readUint8();
 						break;
 
 					case 'Uint16':
-						data = view.getUint16(offset, true);
-						offset += 2;
+						data = view.readUint16();
 						break;
 
 					case 'Uint32':
-						data = view.getUint32(offset, true);
-						offset += 4;
+						data = view.readUint32();
 						break;
 
 					case 'Uint64':
-						data = view.getBigUint64(offset, true);
-						offset += 8;
+						data = view.readUint64();
 						break;
 
 					case 'OptionalUint32':
-						/*
-						here's a portion from zombia's official code as a reference for how this works:
-
-						r = t.readUint8() ? t.readUint32() : null;
-						*/
-						data = Boolean(view.getUint8(offset++)) ? (offset += 4, view.getUint32(offset - 4, true)) : null;
+						data = view.readUint8() ? view.readUint32() : null;
 						break;
 				}
 

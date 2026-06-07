@@ -33,7 +33,6 @@ const fillServer = (servId) => {
 						message: 'BLACK LIVES FUCKING MATTER!'
 					}
 				}));
-
 			}, 2000);
 		};
 

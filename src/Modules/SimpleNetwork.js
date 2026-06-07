@@ -364,7 +364,7 @@ export default class SimpleNetwork extends EventEmitter {
 		const opcode = new Uint8Array(data)[0];
 
 		switch (opcode) {
-			case Opcodes.JoinGame:
+			case +Opcodes.JoinGame:
 				{
 					const decodedData = this.decodeEnterWorld(data)
 					this.currentTickNumber = decodedData.startingTick;
@@ -373,17 +373,19 @@ export default class SimpleNetwork extends EventEmitter {
 					break;
 				}
 
-			case Opcodes.Rpc:
+			case +Opcodes.Rpc:
 				this.emit('rpc', this.decodeRpc(data));
 				break;
 
-			case Opcodes.Heartbeat:
+			case +Opcodes.Heartbeat:
 				this.emit('heartbeat', this.decodeHeartbeat(data));
 				break;
-
-			case Opcodes.EntityUpdate:
+			
+			/*
+			case +Opcodes.EntityUpdate:
 				this.emit('entityUpdate', this.decodeEntityUpdate(data));
 				break;
+			*/
 		}
 	}
 

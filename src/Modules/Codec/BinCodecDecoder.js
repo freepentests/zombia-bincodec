@@ -80,7 +80,54 @@ export default class BinCodecDecoder {
 		};
 
 		if (rpcParams.isArray) {
-			return rpc; // will implement array logic later
+			const elements = [];
+			const numElements = view.readUint16();
+
+			for (let i = 0; i < numElements; i++) {
+				let response = {};
+				Object.keys(rpcParams).forEach(paramName => {
+					if (paramName === 'isArray')  return;
+
+					const dataType = rpcParams[paramName];
+					let data;
+
+					switch (dataType) {
+						case 'Boolean':
+							data = Boolean(view.readUint8());
+							break;
+
+						case 'String':
+							data = view.readVString();
+							break;
+
+						case 'Uint8':
+							data = view.readUint8();
+							break;
+
+						case 'Uint16':
+							data = view.readUint16();
+							break;
+
+						case 'Uint32':
+							data = view.readUint32();
+							break;
+
+						case 'Uint64':
+							data = view.readUint64();
+							break;
+
+						case 'OptionalUint32':
+							data = view.readUint8() ? view.readUint32() : null;
+							break;
+					}
+
+					response[paramName] = data;
+				});
+
+				elements.push(response);
+			}
+
+			return (rpc.response = elements, rpc);
 		} else {
 			Object.keys(rpcParams).forEach(paramName => {
 				const dataType = rpcParams[paramName];
@@ -124,8 +171,9 @@ export default class BinCodecDecoder {
 	}
 
 	decodeEntityUpdate(packet) {
-		// the properties accessed in this method belong to the Network class, so running decodeEntityUpdate with this class alone will not work; you will need to use inheritance or mixins so that this method will be able to access the properties defined by Network
+		// ALL OF THIS IS BROKEN AND UNDERDEVELOPED
 
+		// the properties accessed in this method belong to the Network class, so running decodeEntityUpdate with this class alone will not work; you will need to use inheritance or mixins so that this method will be able to access the properties defined by Network
 		const view = ByteBuffer.fromBinary(packet, true);
 		view.offset = 1; // skip over opcode
 
@@ -168,6 +216,8 @@ export default class BinCodecDecoder {
 				const dataType = this.propDataTypes[propName]; // game.network.propTypes
 				this.decodeEntityProperties(entities, entityId, view, propName, dataType);
 			});
+
+			console.log(entities);
 		}
 
 		this.knownEntities = Object.keys(entities);

@@ -1,0 +1,17 @@
+{
+  "name": "zombia",
+  "version": "1.0.0",
+  "description": "Basic Session Saver for Zombia",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "socks-proxy-agent": "^10.0.0",
+    "ws": "^8.21.0"
+  }
+}

@@ -28,12 +28,32 @@ const rpcIdToName = [
 ]
 
 export default class BinCodecDecoder {
+	#readVarint32(packet, offset) {
+		// LEB128 standard
+		let number = 0;
+		let placesToShift = 0;
+		let position = offset;
+		const byteArray = new Uint8Array(packet);
+
+		while (position < byteArray.length) {
+			const byte = byteArray[position++];
+
+			number |= (byte & 127) << placesToShift;
+			placesToShift += 7;
+
+			if (byte & 128) break; // if MSB is 128 then no continuation
+		}
+
+		return [number, position];
+	}
+
 	#readVString(packet, offset) {
-		const strLen = new DataView(packet).getUint8(offset);
-		const stringBuffer = packet.slice(offset + 1, offset + strLen + 1);
+		let strLen;
+		[strLen, offset] = this.#readVarint32(packet, offset);
+		const stringBuffer = packet.slice(offset, offset + strLen);
 		const string = new TextDecoder().decode(new Uint8Array(stringBuffer));
 
-		const newOffset = offset + strLen + 1;
+		const newOffset = offset + strLen;
 
 		return [string, newOffset];
 	}
@@ -46,11 +66,13 @@ export default class BinCodecDecoder {
 
 		// i really need to start using bytebuffer
 
-		let offset = 4;
+		let offset = 1;
 		let name, reconnectSecret;
 
 		[reconnectSecret, offset] = this.#readVString(packet, offset);
 		[name, offset] = this.#readVString(packet, offset);
+
+		console.log(name);
 
 		const uid = view.getUint32(offset, true);
 		offset += 4;
@@ -99,6 +121,7 @@ export default class BinCodecDecoder {
 		const rpcId = view.getUint8(1);
 
 		const rpcName = rpcIdToName[rpcId];
+		if (!rpcName) return rpcId;
 		const rpcParams = ServerToClientRpcMap[rpcName];
 		const rpc = {
 			name: rpcName,
@@ -121,7 +144,7 @@ export default class BinCodecDecoder {
 						break;
 
 					case 'String':
-						[data, offset] = this.#readVString(offset);
+						[data, offset] = this.#readVString(packet, offset); 
 						break;
 
 					case 'Uint8':

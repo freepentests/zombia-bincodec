@@ -6,7 +6,7 @@ network.init('wss://server-v04001.zombia.io/');
 network.ws.onopen = () => {
 	network.sendEnterWorld({
 		username: 'blmlol',
-		partyKey: 'ixIN87OusIF'
+		partyKey: ''
 	});
 
 	network.on('rpc', (e) => {

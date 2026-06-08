@@ -18,8 +18,7 @@ const scanSingleServer = (serverId) => {
 
 					if (result) console.log(result);
 
-					network.ws.close();
-
+					network.cleanup();
 					resolve();
 				}
 			});

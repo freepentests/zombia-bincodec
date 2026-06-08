@@ -408,6 +408,11 @@ export default class SimpleNetwork extends EventEmitter {
 
 		this.ws.send(this.encodeHeartbeat());
 	}
+
+	cleanup() {
+		this.ws.close();
+		this.removeAllListeners();
+	}
 }
 
 const mixin = (target, source) => {
@@ -417,7 +422,6 @@ const mixin = (target, source) => {
 		}
 	});
 }
-
 
 mixin(SimpleNetwork, BinCodecEncoder);
 mixin(SimpleNetwork, BinCodecDecoder);
